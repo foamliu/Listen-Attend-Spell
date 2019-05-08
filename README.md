@@ -18,9 +18,15 @@ year={2015}
 The dataset I used is the LibriSpeech dataset. It contains about 1000 hours of 16kHz read English speech. It is available here: http://www.openslr.org/12/
 
 ### Obtain
-Create a folder data then run:
+Create a folder "data" then run:
 ```bash
-$ wget http://www.openslr.org/resources/33/data_aishell.tgz
+$ wget http://www.openslr.org/resources/12/train-clean-100.tar.gz
+$ wget http://www.openslr.org/resources/12/train-clean-360.tar.gz
+$ wget http://www.openslr.org/resources/12/train-other-500.tar.gz
+$ wget http://www.openslr.org/resources/12/dev-clean.tar.gz
+$ wget http://www.openslr.org/resources/12/dev-other.tar.gz
+$ wget http://www.openslr.org/resources/12/test-clean.tar.gz
+$ wget http://www.openslr.org/resources/12/test-other.tar.gz
 ```
 
 ## Dependencies
