@@ -1,4 +1,3 @@
-import os
 import tarfile
 
 
@@ -10,5 +9,10 @@ def extract(filename):
 
 
 if __name__ == "__main__":
-    if not os.path.isdir('data/data_aishell'):
-        extract('data/data_aishell.tgz')
+    extract('data/train-clean-100.tar.gz')
+    extract('data/train-clean-360.tar.gz')
+    extract('data/train-other-500.tar.gz')
+    extract('data/dev-clean.tar.gz')
+    extract('data/dev-other.tar.gz')
+    extract('data/test-clean.tar.gz')
+    extract('data/test-other.tar.gz')
