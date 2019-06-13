@@ -1,10 +1,9 @@
 import numpy as np
-import torch
 from torch import nn
 from torch.optim.lr_scheduler import StepLR
 
-from config import device, grad_clip, print_freq, vocab_size
-from data_gen import LibriSpeechDataset, pad_collate
+from config import *
+from data_gen import LoadDataset
 from models import Encoder, Decoder, Seq2Seq
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger
 
@@ -47,12 +46,15 @@ def train_net(args):
     decoder = decoder.to(device)
 
     # Custom dataloaders
-    train_dataset = LibriSpeechDataset('train')
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=pad_collate,
-                                               shuffle=True)
-    valid_dataset = LibriSpeechDataset('dev')
-    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=args.batch_size, collate_fn=pad_collate,
-                                               shuffle=False, drop_last=True)
+    train_loader = LoadDataset('train', text_only=False, data_path=data_path, batch_size=batch_size,
+                               max_timestep=max_timestep, max_label_len=max_label_len, use_gpu=use_gpu, n_jobs=n_jobs,
+                               train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
+                               decode_beam_size=decode_beam_size)
+
+    val_loader = LoadDataset('dev', text_only=False, data_path=data_path, batch_size=batch_size,
+                             max_timestep=max_timestep, max_label_len=max_label_len, use_gpu=use_gpu, n_jobs=n_jobs,
+                             train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
+                             decode_beam_size=decode_beam_size)
 
     scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.2)
 
@@ -70,7 +72,7 @@ def train_net(args):
         logger.info('[Training] Accuracy : {:.4f}'.format(train_loss))
 
         # One epoch's validation
-        valid_loss = valid(valid_loader=valid_loader,
+        valid_loss = valid(valid_loader=val_loader,
                            encoder=encoder,
                            decoder=decoder)
 
