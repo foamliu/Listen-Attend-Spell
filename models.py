@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-
+from torchsummary import summary
 from config import PAD_token, SOS_token, EOS_token
 from utils import pad_list
 
@@ -300,4 +300,10 @@ class DotProductAttention(nn.Module):
 
 
 if __name__ == "__main__":
-    pass
+    from utils import parse_args
+    from config import vocab_size
+    args = parse_args()
+    encoder = Encoder(args.input_dim, args.encoder_hidden_size, args.num_layers)
+    decoder = Decoder(vocab_size, args.embedding_dim, args.decoder_hidden_size)
+    summary(encoder, (3, 224, 224))
+    summary(decoder, (3, 224, 224))

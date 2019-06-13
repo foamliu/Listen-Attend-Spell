@@ -41,7 +41,7 @@ EOS_token = 2
 num_train = 120418
 num_dev = 14326
 num_test = 7176
-vocab_size = 4336
+vocab_size = 30
 HALF_BATCHSIZE_TIME = 800
 HALF_BATCHSIZE_LABEL = 150
 
