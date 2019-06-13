@@ -113,7 +113,7 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger, seq_loss):
 
         # ASR forwarding
         optimizer.zero_grad()
-        ctc_pred, state_len, att_pred, _ = model(x, ans_len, tf_rate=tf_rate, teacher=y, state_len=state_len)
+        ctc_pred, state_len, att_pred, _ = model(x, ans_len, y)
 
         # Calculate loss function
         label = y[:, 1:ans_len + 1].contiguous()
