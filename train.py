@@ -113,7 +113,7 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger, seq_loss):
         state_len = [int(sl) for sl in state_len]
         print('state_len.shape: ' + str(len(state_len)))
         ans_len = int(torch.max(torch.sum(y != 0, dim=-1)))
-        print('ans_len.shape: ' + str(ans_len.shape))
+        print('ans_len: ' + str(ans_len))
 
         # ASR forwarding
         optimizer.zero_grad()
