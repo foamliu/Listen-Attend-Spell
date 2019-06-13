@@ -1,7 +1,10 @@
 import argparse
 import logging
+import os
+import pickle
 from operator import itemgetter
 
+import editdistance as ed
 import librosa
 import numpy as np
 import torch
@@ -224,3 +227,109 @@ def target_padding(y, max_len):
     for idx, label_seq in enumerate(y):
         new_y[idx, :len(label_seq)] = np.array(label_seq)
     return new_y
+
+
+class Mapper():
+    '''Mapper for index2token'''
+
+    def __init__(self, file_path):
+        # Find mapping
+        with open(os.path.join(file_path, 'mapping.pkl'), 'rb') as fp:
+            self.mapping = pickle.load(fp)
+        self.r_mapping = {v: k for k, v in self.mapping.items()}
+        symbols = ''.join(list(self.mapping.keys()))
+        if '▁' in symbols:
+            self.unit = 'subword'
+        elif '#' in symbols:
+            self.unit = 'phone'
+        elif len(self.mapping) < 50:
+            self.unit = 'char'
+        else:
+            self.unit = 'word'
+
+    def get_dim(self):
+        return len(self.mapping)
+
+    def translate(self, seq, return_string=False):
+        new_seq = []
+        for c in trim_eos(seq):
+            new_seq.append(self.r_mapping[c])
+
+        if return_string:
+            if self.unit == 'subword':
+                new_seq = ''.join(new_seq).replace('<sos>', '').replace('<eos>', '').replace('▁', ' ').lstrip()
+            elif self.unit == 'word':
+                new_seq = ' '.join(new_seq).replace('<sos>', '').replace('<eos>', '').lstrip()
+            elif self.unit == 'phone':
+                new_seq = ' '.join(collapse_phn(new_seq)).replace('<sos>', '').replace('<eos>', '')
+            elif self.unit == 'char':
+                new_seq = ''.join(new_seq).replace('<sos>', '').replace('<eos>', '')
+        return new_seq
+
+
+def cal_acc(pred, label):
+    pred = np.argmax(pred.cpu().detach(), axis=-1)
+    label = label.cpu()
+    accs = []
+    for p, l in zip(pred, label):
+        correct = 0.0
+        total_char = 0
+        for pp, ll in zip(p, l):
+            if ll == 0: break
+            correct += int(pp == ll)
+            total_char += 1
+        accs.append(correct / total_char)
+    return sum(accs) / len(accs)
+
+
+def cal_cer(pred, label, mapper, get_sentence=False, argmax=True):
+    if argmax:
+        pred = np.argmax(pred.cpu().detach(), axis=-1)
+    label = label.cpu()
+    pred = [mapper.translate(p, return_string=True) for p in pred]
+    label = [mapper.translate(l, return_string=True) for l in label]
+
+    if get_sentence:
+        return pred, label
+    eds = [float(ed.eval(p.split(' '), l.split(' '))) / len(l.split(' ')) for p, l in zip(pred, label)]
+
+    return sum(eds) / len(eds)
+
+
+# Only draw first attention head
+def draw_att(att_list, hyp_txt):
+    attmaps = []
+    for att, hyp in zip(att_list[0], np.argmax(hyp_txt.cpu().detach(), axis=-1)):
+        att_len = len(trim_eos(hyp))
+        att = att.detach().cpu()
+        attmaps.append(torch.stack([att, att, att], dim=0)[:, :att_len, :])  # +1 for att. @ <eos>
+    return attmaps
+
+
+def collapse_phn(seq):
+    # phonemes = ["b", "bcl", "d", "dcl", "g", "gcl", "p", "pcl", "t", "tcl", "k", "kcl", "dx", "q", "jh", "ch", "s", "sh", "z", "zh",
+    # "f", "th", "v", "dh", "m", "n", "ng", "em", "en", "eng", "nx", "l", "r", "w", "y",
+    # "hh", "hv", "el", "iy", "ih", "eh", "ey", "ae", "aa", "aw", "ay", "ah", "ao", "oy",
+    # "ow", "uh", "uw", "ux", "er", "ax", "ix", "axr", "ax-h", "pau", "epi", "h#"]
+
+    phonemse_reduce_mapping = {"b": "b", "bcl": "h#", "d": "d", "dcl": "h#", "g": "g", "gcl": "h#", "p": "p",
+                               "pcl": "h#", "t": "t", "tcl": "h#", "k": "k", "kcl": "h#", "dx": "dx", "q": "q",
+                               "jh": "jh", "ch": "ch", "s": "s", "sh": "sh", "z": "z", "zh": "sh",
+                               "f": "f", "th": "th", "v": "v", "dh": "dh", "m": "m", "n": "n", "ng": "ng", "em": "m",
+                               "en": "n", "eng": "ng", "nx": "n", "l": "l", "r": "r", "w": "w", "y": "y",
+                               "hh": "hh", "hv": "hh", "el": "l", "iy": "iy", "ih": "ih", "eh": "eh", "ey": "ey",
+                               "ae": "ae", "aa": "aa", "aw": "aw", "ay": "ay", "ah": "ah", "ao": "aa", "oy": "oy",
+                               "ow": "ow", "uh": "uh", "uw": "uw", "ux": "uw", "er": "er", "ax": "ah", "ix": "ih",
+                               "axr": "er", "ax-h": "ah", "pau": "h#", "epi": "h#", "h#": "h#", "<sos>": "<sos>",
+                               "<unk>": "<unk>", "<eos>": "<eos>"}
+
+    return [phonemse_reduce_mapping[c] for c in seq]
+
+
+def trim_eos(seqence):
+    new_pred = []
+    for char in seqence:
+        new_pred.append(int(char))
+        if char == 1:
+            break
+    return new_pred

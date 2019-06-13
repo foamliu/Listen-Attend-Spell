@@ -26,6 +26,7 @@ batch_size = 24
 dev_batch_size = 16
 use_gpu = True
 decode_beam_size = 20
+tf_rate = 1.0
 
 lr = 1e-3
 num_workers = 1  # for data-loading; right now, only 1 works with h5py

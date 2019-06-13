@@ -1,11 +1,12 @@
 import numpy as np
 from torch import nn
-from torch.optim.lr_scheduler import StepLR
 
 from config import *
 from data_gen import LoadDataset
 from models import Encoder, Decoder, Seq2Seq
-from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger
+from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, Mapper, cal_acc, cal_cer
+
+VAL_STEP = 30  # Additional Inference Timesteps to run during validation (to calculate CER)
 
 
 def train_net(args):
@@ -56,25 +57,25 @@ def train_net(args):
                              train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
                              decode_beam_size=decode_beam_size)
 
-    scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.2)
+    seq_loss = torch.nn.CrossEntropyLoss(ignore_index=0, reduction='none').to(device)  # , reduction='none')
 
     # Epochs
     for epoch in range(start_epoch, args.end_epoch):
-        scheduler.step()
-
         # One epoch's training
         train_loss = train(train_loader=train_loader,
                            encoder=encoder,
                            decoder=decoder,
                            optimizer=optimizer,
                            epoch=epoch,
-                           logger=logger)
+                           logger=logger,
+                           seq_loss=seq_loss)
         logger.info('[Training] Accuracy : {:.4f}'.format(train_loss))
 
         # One epoch's validation
         valid_loss = valid(valid_loader=val_loader,
                            encoder=encoder,
-                           decoder=decoder)
+                           decoder=decoder,
+                           seq_loss=seq_loss)
 
         logger.info('[Validate] Accuracy : {:.4f}'.format(valid_loss))
 
@@ -91,7 +92,7 @@ def train_net(args):
         save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, optimizer, best_loss, is_best)
 
 
-def train(train_loader, encoder, decoder, optimizer, epoch, logger):
+def train(train_loader, encoder, decoder, optimizer, epoch, logger, seq_loss):
     encoder.train()  # train mode (dropout and batchnorm is used)
     decoder.train()
 
@@ -100,17 +101,34 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger):
     losses = AverageMeter()
 
     # Batches
-    for i, (features, trns, input_lengths) in enumerate(train_loader):
-        # Move to GPU, if available
-        features = features.float().to(device)
-        trns = trns.long().to(device)
-        input_lengths = input_lengths.long().to(device)
+    for i, (x, y) in enumerate(train_loader):
+        # Hack bucket, record state length for each uttr, get longest label seq for decode step
+        assert len(x.shape) == 4, 'Bucketing should cause acoustic feature to have shape 1xBxTxD'
+        assert len(y.shape) == 3, 'Bucketing should cause label have to shape 1xBxT'
+        x = x.squeeze(0).to(device=device, dtype=torch.float32)
+        y = y.squeeze(0).to(device=device, dtype=torch.long)
+        state_len = np.sum(np.sum(x.cpu().data.numpy(), axis=-1) != 0, axis=-1)
+        state_len = [int(sl) for sl in state_len]
+        ans_len = int(torch.max(torch.sum(y != 0, dim=-1)))
 
-        # Forward prop.
-        loss = model(features, input_lengths, trns)
+        # ASR forwarding
+        optimizer.zero_grad()
+        ctc_pred, state_len, att_pred, _ = model(x, ans_len, tf_rate=tf_rate, teacher=y, state_len=state_len)
+
+        # Calculate loss function
+        label = y[:, 1:ans_len + 1].contiguous()
+
+        # CE loss on attention decoder
+        b, t, c = att_pred.shape
+        att_loss = seq_loss(att_pred.view(b * t, c), label.view(-1))
+        att_loss = torch.sum(att_loss.view(b, t), dim=-1) / torch.sum(y != 0, dim=-1) \
+            .to(device=device, dtype=torch.float32)  # Sum each uttr and devide by length
+        att_loss = torch.mean(att_loss)  # Mean by batch
+        loss = att_loss
 
         # Back prop.
         optimizer.zero_grad()
+
         loss.backward()
 
         # Clip gradients
@@ -130,26 +148,53 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger):
     return losses.avg
 
 
-def valid(valid_loader, encoder, decoder):
+def valid(valid_loader, encoder, decoder, seq_loss):
     encoder.eval()
     decoder.eval()
 
     model = Seq2Seq(encoder, decoder)
 
+    mapper = Mapper(data_path)
+
     losses = AverageMeter()
 
-    # Batches
-    for i, (features, trns, input_lengths) in enumerate(valid_loader):
-        # Move to GPU, if available
-        features = features.float().to(device)
-        trns = trns.long().to(device)
-        input_lengths = input_lengths.long().to(device)
+    # Init stats
+    val_loss, val_ctc, val_att, val_acc, val_cer = 0.0, 0.0, 0.0, 0.0, 0.0
+    val_len = 0
+    all_pred, all_true = [], []
 
-        # Forward prop.
-        loss = model(features, input_lengths, trns)
+    with torch.no_grad():
+        # Batches
+        for i, (x, y) in enumerate(valid_loader):
+            # Prepare data
+            if len(x.shape) == 4: x = x.squeeze(0)
+            if len(y.shape) == 3: y = y.squeeze(0)
+            x = x.to(device=device, dtype=torch.float32)
+            y = y.to(device=device, dtype=torch.long)
+            state_len = torch.sum(torch.sum(x.cpu(), dim=-1) != 0, dim=-1)
+            state_len = [int(sl) for sl in state_len]
+            ans_len = int(torch.max(torch.sum(y != 0, dim=-1)))
 
-        # Keep track of metrics
-        losses.update(loss.item())
+            # Forward
+            ctc_pred, state_len, att_pred, att_maps = model(x, ans_len + VAL_STEP, state_len=state_len)
+
+            # Compute attention loss & get decoding results
+            label = y[:, 1:ans_len + 1].contiguous()
+
+            seq_loss = seq_loss(att_pred[:, :ans_len, :].contiguous().view(-1, att_pred.shape[-1]), label.view(-1))
+            seq_loss = torch.sum(seq_loss.view(x.shape[0], -1), dim=-1) / torch.sum(y != 0, dim=-1) \
+                .to(device=device, dtype=torch.float32)  # Sum each uttr and devide by length
+            seq_loss = torch.mean(seq_loss)  # Mean by batch
+            val_att += seq_loss.detach() * int(x.shape[0])
+            t1, t2 = cal_cer(att_pred, label, mapper=mapper, get_sentence=True)
+            all_pred += t1
+            all_true += t2
+            val_acc += cal_acc(att_pred, label) * int(x.shape[0])
+            val_cer += cal_cer(att_pred, label, mapper=mapper) * int(x.shape[0])
+
+            loss = val_att
+            # Keep track of metrics
+            losses.update(loss.item())
 
     return losses.avg
 
