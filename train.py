@@ -111,7 +111,7 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger, seq_loss):
         y = y.squeeze(0).to(device=device, dtype=torch.long)
         state_len = np.sum(np.sum(x.cpu().data.numpy(), axis=-1) != 0, axis=-1)
         state_len = [int(sl) for sl in state_len]
-        print('state_len.shape: ' + str(state_len.shape))
+        print('state_len.shape: ' + str(len(state_len)))
         ans_len = int(torch.max(torch.sum(y != 0, dim=-1)))
         print('ans_len.shape: ' + str(ans_len.shape))
 
