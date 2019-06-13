@@ -82,7 +82,7 @@ def accuracy(scores, targets, k=1):
 def parse_args():
     parser = argparse.ArgumentParser(description='Listen Attend and Spell')
     # general
-    parser.add_argument('--input-dim', type=int, default=40, help='input dimension')
+    parser.add_argument('--input-dim', type=int, default=80, help='input dimension')
     parser.add_argument('--encoder-hidden-size', type=int, default=512, help='encoder hidden size')
     parser.add_argument('--decoder-hidden-size', type=int, default=1024, help='decoder hidden size')
     parser.add_argument('--num-layers', type=int, default=4, help='number of encoder layers')
