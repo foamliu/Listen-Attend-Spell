@@ -1,5 +1,4 @@
 import numpy as np
-from torch import nn
 
 from config import *
 from data_gen import LoadDataset
@@ -117,18 +116,7 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger, seq_loss):
 
         # ASR forwarding
         optimizer.zero_grad()
-        ctc_pred, state_len, att_pred, _ = model(x, state_len, y)
-
-        # Calculate loss function
-        label = y[:, 1:ans_len + 1].contiguous()
-
-        # CE loss on attention decoder
-        b, t, c = att_pred.shape
-        att_loss = seq_loss(att_pred.view(b * t, c), label.view(-1))
-        att_loss = torch.sum(att_loss.view(b, t), dim=-1) / torch.sum(y != 0, dim=-1) \
-            .to(device=device, dtype=torch.float32)  # Sum each uttr and devide by length
-        att_loss = torch.mean(att_loss)  # Mean by batch
-        loss = att_loss
+        loss = model(x, state_len, y)
 
         # Back prop.
         optimizer.zero_grad()
