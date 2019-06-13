@@ -1,5 +1,5 @@
 import numpy as np
-
+from torch.optim.lr_scheduler import StepLR
 from config import *
 from data_gen import LoadDataset
 from models import Encoder, Decoder, Seq2Seq
@@ -58,8 +58,12 @@ def train_net(args):
 
     seq_loss = torch.nn.CrossEntropyLoss(ignore_index=0, reduction='none').to(device)  # , reduction='none')
 
+    scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.1)
+
     # Epochs
     for epoch in range(start_epoch, args.end_epoch):
+        scheduler.step()
+
         # One epoch's training
         train_loss = train(train_loader=train_loader,
                            encoder=encoder,
