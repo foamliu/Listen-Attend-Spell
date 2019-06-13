@@ -58,7 +58,7 @@ def train_net(args):
 
     seq_loss = torch.nn.CrossEntropyLoss(ignore_index=0, reduction='none').to(device)  # , reduction='none')
 
-    scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.95)
 
     # Epochs
     for epoch in range(start_epoch, args.end_epoch):
