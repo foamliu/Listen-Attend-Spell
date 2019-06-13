@@ -14,7 +14,19 @@ cmvn = True  # apply CMVN on feature
 num_layers = 4
 
 # Training parameters
-batch_size = 32
+dataset = 'librispeech'
+data_path = 'data/output/libri_fbank80_char30'
+n_jobs = 8
+max_timestep = 3000
+max_label_len = 400
+train_set = ['train-clean-100']
+dev_set = ['dev-clean']
+test_set = ['test-clean']
+batch_size = 24
+dev_batch_size = 16
+use_gpu = True
+decode_beam_size = 20
+
 lr = 1e-3
 num_workers = 1  # for data-loading; right now, only 1 works with h5py
 grad_clip = 5.  # clip gradients at an absolute value of
@@ -29,6 +41,8 @@ num_train = 120418
 num_dev = 14326
 num_test = 7176
 vocab_size = 4336
+HALF_BATCHSIZE_TIME = 800
+HALF_BATCHSIZE_LABEL = 150
 
 DATA_DIR = 'data'
 aishell_folder = 'data/data_aishell'

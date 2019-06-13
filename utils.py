@@ -79,8 +79,11 @@ def accuracy(scores, targets, k=1):
 def parse_args():
     parser = argparse.ArgumentParser(description='Listen Attend and Spell')
     # general
-    parser.add_argument('--input-dim', type=int, default=40, help='input dimension')
-    parser.add_argument('--encoder-hidden-size', type=int, default=512, help='encoder hidden size')
+    parser.add_argument('--data-path', type=str, default='data/output/libri_fbank80_char30', help='source data path')
+    parser.add_argument('--batch-size', type=int, default=24, help='batch size in each context')
+    parser.add_argument('--n-jobs', type=int, default=8, help='subprocess used for torch Dataloader')
+
+
     parser.add_argument('--decoder-hidden-size', type=int, default=1024, help='decoder hidden size')
     parser.add_argument('--num-layers', type=int, default=4, help='number of encoder layers')
     parser.add_argument('--embedding-dim', type=int, default=512, help='embedding dimension')
@@ -91,7 +94,6 @@ def parse_args():
     parser.add_argument('--weight-decay', type=float, default=0.0005, help='weight decay')
     parser.add_argument('--mom', type=float, default=0.9, help='momentum')
     parser.add_argument('--emb-size', type=int, default=512, help='embedding length')
-    parser.add_argument('--batch-size', type=int, default=32, help='batch size in each context')
     parser.add_argument('--checkpoint', type=str, default=None, help='checkpoint')
     args = parser.parse_args()
     return args
@@ -210,3 +212,17 @@ def encode_target(input_list, table=None, mode='subword', max_idx=500):
         tmp.append(1)
         output_list.append(tmp)
     return output_list, table
+
+
+# Target Padding Function
+# Parameters
+#     - y          : list, list of int
+#     - max_len    : int, max length of output (0 for max_len in y)
+# Return
+#     - new_y      : np.array with shape (len(y),max_len)
+def target_padding(y, max_len):
+    if max_len is 0: max_len = max([len(v) for v in y])
+    new_y = np.zeros((len(y), max_len), dtype=int)
+    for idx, label_seq in enumerate(y):
+        new_y[idx, :len(label_seq)] = np.array(label_seq)
+    return new_y
