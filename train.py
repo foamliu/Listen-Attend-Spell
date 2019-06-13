@@ -57,8 +57,6 @@ def train_net(args):
                              train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
                              decode_beam_size=decode_beam_size)
 
-    seq_loss = torch.nn.CrossEntropyLoss(ignore_index=0, reduction='none').to(device)  # , reduction='none')
-
     scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.95)
 
     # Epochs
@@ -71,15 +69,13 @@ def train_net(args):
                            decoder=decoder,
                            optimizer=optimizer,
                            epoch=epoch,
-                           logger=logger,
-                           seq_loss=seq_loss)
+                           logger=logger)
         logger.info('[Training] Loss : {:.4f}'.format(train_loss))
 
         # One epoch's validation
         valid_loss = valid(valid_loader=val_loader,
                            encoder=encoder,
-                           decoder=decoder,
-                           seq_loss=seq_loss)
+                           decoder=decoder)
 
         logger.info('[Validate] Loss : {:.4f}'.format(valid_loss))
 
@@ -96,7 +92,7 @@ def train_net(args):
         save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, optimizer, best_loss, is_best)
 
 
-def train(train_loader, encoder, decoder, optimizer, epoch, logger, seq_loss):
+def train(train_loader, encoder, decoder, optimizer, epoch, logger):
     encoder.train()  # train mode (dropout and batchnorm is used)
     decoder.train()
 
@@ -142,7 +138,7 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger, seq_loss):
     return losses.avg
 
 
-def valid(valid_loader, encoder, decoder, seq_loss):
+def valid(valid_loader, encoder, decoder):
     encoder.eval()
     decoder.eval()
 
