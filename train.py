@@ -103,16 +103,16 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger, seq_loss):
     for i, (x, y) in enumerate(train_loader):
         # Hack bucket, record state length for each uttr, get longest label seq for decode step
         assert len(x.shape) == 4, 'Bucketing should cause acoustic feature to have shape 1xBxTxD'
-        print('x.shape: ' + str(x.shape))
+        # print('x.shape: ' + str(x.shape))
         assert len(y.shape) == 3, 'Bucketing should cause label have to shape 1xBxT'
-        print('y.shape: ' + str(y.shape))
+        # print('y.shape: ' + str(y.shape))
         x = x.squeeze(0).to(device=device, dtype=torch.float32)
         y = y.squeeze(0).to(device=device, dtype=torch.long)
         state_len = np.sum(np.sum(x.cpu().data.numpy(), axis=-1) != 0, axis=-1)
         state_len = [int(sl) for sl in state_len]
-        print('state_len.shape: ' + str(len(state_len)))
+        # print('state_len.shape: ' + str(len(state_len)))
         ans_len = int(torch.max(torch.sum(y != 0, dim=-1)))
-        print('ans_len: ' + str(ans_len))
+        # print('ans_len: ' + str(ans_len))
 
         # ASR forwarding
         optimizer.zero_grad()
