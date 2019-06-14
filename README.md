@@ -38,8 +38,8 @@ $ wget http://www.openslr.org/resources/12/test-other.tar.gz
 ### Data wrangling
 Extract audio and transcript data, scan them, to get features:
 ```bash
-$ python extract.py
-$ python pre_process.py
+$ python3 extract.py
+$ python3 pre_process.py --data_path data/LibriSpeech/ --feature_type fbank --feature_dim 40 --output_path data/output --target char
 ```
 
 ### Train

@@ -1,5 +1,7 @@
 import pickle
 
+import numpy as np
+
 from config import *
 from data_gen import LoadDataset
 from models import Seq2Seq
@@ -19,6 +21,8 @@ if __name__ == '__main__':
         encode_table = pickle.load(file)
 
     print(encode_table)
+    reverse_loop = {v: k for k, v in encode_table.items()}
+    print(reverse_loop)
 
     checkpoint = 'BEST_checkpoint.tar'
     checkpoint = torch.load(checkpoint)
@@ -38,5 +42,8 @@ if __name__ == '__main__':
     for i, (x, y) in enumerate(test_loader):
         print(x.shape)
         print(y.shape)
+        y = np.reshape(y, (-1,)).tolist()
+        y = [reverse_loop[idx] for idx in y]
         print(y)
+        print(''.join(y))
         break
