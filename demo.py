@@ -28,4 +28,5 @@ if __name__ == '__main__':
     for i, (x, y) in enumerate(test_loader):
         print(x.shape)
         print(y.shape)
+        print(y)
         break
