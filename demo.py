@@ -1,15 +1,13 @@
 import os
-import pickle
 import random
 from shutil import copyfile
 
 import torch
 
-from config import pickle_file, device
-from data_gen import pad_collate
+from config import *
+from data_gen import LoadDataset
 from models import Seq2Seq
-from utils import ensure_folder
-from utils import extract_feature
+from utils import ensure_folder, extract_feature
 
 
 class adict(dict):
@@ -27,42 +25,14 @@ if __name__ == '__main__':
     decoder.eval()
     model = Seq2Seq(encoder, decoder)
 
-    with open(pickle_file, 'rb') as file:
-        data = pickle.load(file)
+    train_loader = LoadDataset('test', text_only=False, data_path=data_path, batch_size=batch_size,
+                               max_timestep=max_timestep, max_label_len=max_label_len, use_gpu=use_gpu, n_jobs=n_jobs,
+                               train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
+                               decode_beam_size=decode_beam_size)
 
-    VOCAB = data['VOCAB']
-    char_list = list(VOCAB.keys())
-    IVOCAB = data['IVOCAB']
-    samples = data['test']
+    print(len(train_loader))
+    print(train_loader[0])
 
-    samples = random.sample(samples, 10)
-
-    ensure_folder('waves')
-
-    args = adict()
-    args.beam_size = 5
-    args.nbest = 1
-    args.decode_max_len = 40
-
-    for i, sample in enumerate(samples):
-        wave = sample['wave']
-        dst = os.path.join('waves', '{}.wav'.format(i))
-        copyfile(wave, dst)
-        print(wave)
-
-        feature = extract_feature(wave)
-        trn = sample['trn']
-        transcript = [IVOCAB[token_id] for token_id in trn]
-        transcript = ''.join(transcript)
-        print(transcript)
-
-        batch = [(feature, trn)]
-        data = pad_collate(batch)
-        _features, _trns, _input_lengths = data
-        _features = _features.float().to(device)
-        _input_lengths = _input_lengths.long().to(device)
-
-        nbest_hyps = model.recognize(_features, _input_lengths, char_list, args)
-
-        nbest_hyps = ''.join([char_list[int(x)] for x in nbest_hyps[0]['yseq'][1:]])
-        print('nbest_hyps: ' + nbest_hyps)
+    x, y = train_loader[0]
+    print(x.shape)
+    print(y.shape)
