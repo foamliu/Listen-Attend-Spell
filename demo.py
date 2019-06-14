@@ -1,3 +1,5 @@
+import pickle
+
 from config import *
 from data_gen import LoadDataset
 from models import Seq2Seq
@@ -10,6 +12,12 @@ class adict(dict):
 
 
 if __name__ == '__main__':
+    output_dir = data_path
+    with open(os.path.join(output_dir, "mapping.pkl"), "wb") as fp:
+        encode_table = pickle.load(fp)
+
+    print(encode_table)
+
     checkpoint = 'BEST_checkpoint.tar'
     checkpoint = torch.load(checkpoint)
     encoder = checkpoint['encoder']
