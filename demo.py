@@ -42,8 +42,14 @@ if __name__ == '__main__':
     for i, (x, y) in enumerate(test_loader):
         print(x.shape)
         print(y.shape)
-        y = np.reshape(y, (-1,)).tolist()
-        y = [reverse_loop[idx] for idx in y]
-        print(y)
-        print(''.join(y))
+        label = np.reshape(y, (-1,)).tolist()
+        label = [reverse_loop[idx] for idx in label]
+        print(''.join(label))
+
+        x = x.squeeze(0).to(device=device, dtype=torch.float32)
+        y = y.squeeze(0).to(device=device, dtype=torch.long)
+        state_len = np.sum(np.sum(x.cpu().data.numpy(), axis=-1) != 0, axis=-1)
+        state_len = [int(sl) for sl in state_len]
+
+        loss = model(x, state_len, y)
         break
