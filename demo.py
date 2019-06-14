@@ -22,6 +22,7 @@ if __name__ == '__main__':
 
     print(encode_table)
     reverse_loop = {v: k for k, v in encode_table.items()}
+    char_list = [k for k, v in encode_table.items()]
     print(reverse_loop)
 
     checkpoint = 'BEST_checkpoint.tar'
@@ -51,5 +52,6 @@ if __name__ == '__main__':
         state_len = np.sum(np.sum(x.cpu().data.numpy(), axis=-1) != 0, axis=-1)
         state_len = [int(sl) for sl in state_len]
 
-        loss = model(x, state_len, y)
+        loss = model.recognize(x, state_len, char_list, None)
+
         break
