@@ -15,8 +15,8 @@ if __name__ == '__main__':
     output_dir = data_path
     filename = os.path.join(output_dir, "mapping.pkl")
     print(filename)
-    with open(filename, "rb") as fp:
-        encode_table = pickle.load(fp)
+    with open(filename, "rb") as file:
+        encode_table = pickle.load(file)
 
     print(encode_table)
 
