@@ -5,6 +5,7 @@ import numpy as np
 from config import *
 from data_gen import LoadDataset
 from models import Seq2Seq
+from utils import parse_args
 
 
 class adict(dict):
@@ -14,6 +15,7 @@ class adict(dict):
 
 
 if __name__ == '__main__':
+    args = parse_args()
     output_dir = data_path
     filename = os.path.join(output_dir, "mapping.pkl")
     print(filename)
@@ -52,6 +54,6 @@ if __name__ == '__main__':
         state_len = np.sum(np.sum(x.cpu().data.numpy(), axis=-1) != 0, axis=-1)
         state_len = [int(sl) for sl in state_len]
 
-        loss = model.recognize(x, state_len, char_list, None)
+        loss = model.recognize(x, state_len, char_list, args)
 
         break

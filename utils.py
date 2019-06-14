@@ -96,6 +96,9 @@ def parse_args():
     parser.add_argument('--emb-size', type=int, default=512, help='embedding length')
     parser.add_argument('--batch-size', type=int, default=32, help='batch size in each context')
     parser.add_argument('--checkpoint', type=str, default=None, help='checkpoint')
+    parser.add_argument('--beam-size', type=int, default=20, help='beam size')
+    parser.add_argument('--nbest', type=int, default=5, help='nbest')
+    parser.add_argument('--decode-max-len', type=int, default=500, help='decode max len')
     args = parser.parse_args()
     return args
 
