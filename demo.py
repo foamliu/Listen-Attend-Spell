@@ -13,7 +13,9 @@ class adict(dict):
 
 if __name__ == '__main__':
     output_dir = data_path
-    with open(os.path.join(output_dir, "mapping.pkl"), "rb") as fp:
+    filename = os.path.join(output_dir, "mapping.pkl")
+    print(filename)
+    with open(filename, "rb") as fp:
         encode_table = pickle.load(fp)
 
     print(encode_table)
