@@ -1,5 +1,5 @@
 import numpy as np
-from torch.optim.lr_scheduler import StepLR
+import torch.nn
 
 from config import *
 from data_gen import LoadDataset
@@ -22,8 +22,8 @@ def train_net(args):
         encoder = Encoder(args.input_dim, args.encoder_hidden_size, args.num_layers)
         decoder = Decoder(vocab_size, args.embedding_dim, args.decoder_hidden_size)
 
-        # encoder = nn.DataParallel(encoder)
-        # decoder = nn.DataParallel(decoder)
+        encoder = nn.DataParallel(encoder)
+        decoder = nn.DataParallel(decoder)
 
         if args.optimizer == 'sgd':
             optimizer = torch.optim.SGD([{'params': encoder.parameters()}, {'params': decoder.parameters()}],
@@ -57,11 +57,8 @@ def train_net(args):
                              train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
                              decode_beam_size=decode_beam_size)
 
-    scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.95)
-
     # Epochs
     for epoch in range(start_epoch, args.end_epoch):
-        scheduler.step()
 
         # One epoch's training
         train_loss = train(train_loader=train_loader,
