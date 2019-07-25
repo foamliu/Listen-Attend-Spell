@@ -6,8 +6,6 @@ from data_gen import LoadDataset
 from models import Encoder, Decoder, Seq2Seq
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger
 
-VAL_STEP = 30  # Additional Inference Timesteps to run during validation (to calculate CER)
-
 
 def train_net(args):
     torch.manual_seed(7)
