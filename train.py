@@ -5,6 +5,7 @@ from config import *
 from data_gen import LoadDataset
 from models import Encoder, Decoder, Seq2Seq
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger
+from tensorboardX import SummaryWriter
 
 VAL_STEP = 30  # Additional Inference Timesteps to run during validation (to calculate CER)
 
@@ -15,6 +16,7 @@ def train_net(args):
     checkpoint = args.checkpoint
     start_epoch = 0
     best_loss = float('inf')
+    writer = SummaryWriter()
     epochs_since_improvement = 0
 
     # Initialize / load checkpoint
@@ -67,13 +69,14 @@ def train_net(args):
                            optimizer=optimizer,
                            epoch=epoch,
                            logger=logger)
+        writer.add_scalar('Train_Loss', train_loss, epoch)
         logger.info('[Training] Loss : {:.4f}'.format(train_loss))
 
         # One epoch's validation
         valid_loss = valid(valid_loader=val_loader,
                            encoder=encoder,
                            decoder=decoder)
-
+        writer.add_scalar('Valid_Loss', valid_loss, epoch)
         logger.info('[Validate] Loss : {:.4f}'.format(valid_loss))
 
         # Check if there was an improvement
