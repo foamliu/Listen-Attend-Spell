@@ -47,12 +47,12 @@ def train_net(args):
     decoder = decoder.to(device)
 
     # Custom dataloaders
-    train_loader = LoadDataset('train', text_only=False, data_path=data_path, batch_size=batch_size,
+    train_loader = LoadDataset('train', text_only=False, data_path=data_path, batch_size=args.batch_size,
                                max_timestep=max_timestep, max_label_len=max_label_len, use_gpu=use_gpu, n_jobs=n_jobs,
                                train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
                                decode_beam_size=decode_beam_size)
 
-    val_loader = LoadDataset('dev', text_only=False, data_path=data_path, batch_size=batch_size,
+    val_loader = LoadDataset('dev', text_only=False, data_path=data_path, batch_size=args.batch_size,
                              max_timestep=max_timestep, max_label_len=max_label_len, use_gpu=use_gpu, n_jobs=n_jobs,
                              train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
                              decode_beam_size=decode_beam_size)
