@@ -1,11 +1,10 @@
 import numpy as np
-import torch.nn as nn
+from tensorboardX import SummaryWriter
 
 from config import *
 from data_gen import LoadDataset
 from models import Encoder, Decoder, Seq2Seq
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger
-from tensorboardX import SummaryWriter
 
 VAL_STEP = 30  # Additional Inference Timesteps to run during validation (to calculate CER)
 
