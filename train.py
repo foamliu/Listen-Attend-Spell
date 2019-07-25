@@ -1,5 +1,5 @@
 import numpy as np
-import torch.nn
+import torch.nn as nn
 
 from config import *
 from data_gen import LoadDataset
