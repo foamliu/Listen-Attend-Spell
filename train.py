@@ -3,7 +3,9 @@ from tensorboardX import SummaryWriter
 
 from config import *
 from data_gen import LoadDataset
-from models import Encoder, Decoder, Seq2Seq
+from models.decoder import Decoder
+from models.encoder import Encoder
+from models.seq2seq import Seq2Seq
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger
 
 
@@ -18,8 +20,14 @@ def train_net(args):
 
     # Initialize / load checkpoint
     if checkpoint is None:
-        encoder = Encoder(args.input_dim, args.encoder_hidden_size, args.num_layers)
-        decoder = Decoder(vocab_size, args.embedding_dim, args.decoder_hidden_size)
+        # model
+        encoder = Encoder(args.einput, args.ehidden, args.elayer,
+                          dropout=args.edropout, bidirectional=args.ebidirectional,
+                          rnn_type=args.etype)
+        decoder = Decoder(vocab_size, args.dembed, sos_id,
+                          eos_id, args.dhidden, args.dlayer,
+                          bidirectional_encoder=args.ebidirectional)
+        model = Seq2Seq(encoder, decoder)
 
         # encoder = nn.DataParallel(encoder)
         # decoder = nn.DataParallel(decoder)

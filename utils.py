@@ -82,23 +82,64 @@ def accuracy(scores, targets, k=1):
 def parse_args():
     parser = argparse.ArgumentParser(description='Listen Attend and Spell')
     # general
-    parser.add_argument('--input-dim', type=int, default=80, help='input dimension')
-    parser.add_argument('--encoder-hidden-size', type=int, default=512, help='encoder hidden size')
-    parser.add_argument('--decoder-hidden-size', type=int, default=1024, help='decoder hidden size')
-    parser.add_argument('--num-layers', type=int, default=4, help='number of encoder layers')
-    parser.add_argument('--embedding-dim', type=int, default=512, help='embedding dimension')
-    parser.add_argument('--end-epoch', type=int, default=1000, help='training epoch size.')
-    parser.add_argument('--lr', type=float, default=0.001, help='start learning rate')
-    parser.add_argument('--lr-step', type=int, default=1, help='period of learning rate decay')
-    parser.add_argument('--optimizer', default='adam', help='optimizer')
-    parser.add_argument('--weight-decay', type=float, default=0.0005, help='weight decay')
-    parser.add_argument('--mom', type=float, default=0.9, help='momentum')
-    parser.add_argument('--emb-size', type=int, default=512, help='embedding length')
-    parser.add_argument('--batch-size', type=int, default=32, help='batch size in each context')
+    # Network architecture
+    # encoder
+    # TODO: automatically infer input dim
+    parser.add_argument('--einput', default=80, type=int,
+                        help='Dim of encoder input')
+    parser.add_argument('--ehidden', default=512, type=int,
+                        help='Size of encoder hidden units')
+    parser.add_argument('--elayer', default=4, type=int,
+                        help='Number of encoder layers.')
+    parser.add_argument('--edropout', default=0.0, type=float,
+                        help='Encoder dropout rate')
+    parser.add_argument('--ebidirectional', default=1, type=int,
+                        help='Whether use bidirectional encoder')
+    parser.add_argument('--etype', default='lstm', type=str,
+                        help='Type of encoder RNN')
+    # attention
+    parser.add_argument('--atype', default='dot', type=str,
+                        help='Type of attention (Only support Dot Product now)')
+    # decoder
+    parser.add_argument('--dembed', default=512, type=int,
+                        help='Size of decoder embedding')
+    parser.add_argument('--dhidden', default=512 * 2, type=int,
+                        help='Size of decoder hidden units. Should be encoder '
+                             '(2*) hidden size dependding on bidirection')
+    parser.add_argument('--dlayer', default=1, type=int,
+                        help='Number of decoder layers.')
+
+    # Training config
+    parser.add_argument('--epochs', default=30, type=int,
+                        help='Number of maximum epochs')
+    parser.add_argument('--half_lr', dest='half_lr', default=0, type=int,
+                        help='Halving learning rate when get small improvement')
+    parser.add_argument('--early_stop', dest='early_stop', default=0, type=int,
+                        help='Early stop training when halving lr but still get'
+                             'small improvement')
+    parser.add_argument('--max_norm', default=5, type=float,
+                        help='Gradient norm threshold to clip')
+    # minibatch
+    parser.add_argument('--batch_size', '-b', default=32, type=int,
+                        help='Batch size')
+    parser.add_argument('--maxlen_in', default=800, type=int, metavar='ML',
+                        help='Batch size is reduced if the input sequence length > ML')
+    parser.add_argument('--maxlen_out', default=150, type=int, metavar='ML',
+                        help='Batch size is reduced if the output sequence length > ML')
+    parser.add_argument('--num_workers', default=4, type=int,
+                        help='Number of workers to generate minibatch')
+    # optimizer
+    parser.add_argument('--optimizer', default='adam', type=str,
+                        choices=['sgd', 'adam'],
+                        help='Optimizer (support sgd and adam now)')
+    parser.add_argument('--lr', default=1e-3, type=float,
+                        help='Init learning rate')
+    parser.add_argument('--momentum', default=0.0, type=float,
+                        help='Momentum for optimizer')
+    parser.add_argument('--l2', default=0.0, type=float,
+                        help='weight decay (L2 penalty)')
     parser.add_argument('--checkpoint', type=str, default=None, help='checkpoint')
-    parser.add_argument('--beam-size', type=int, default=20, help='beam size')
-    parser.add_argument('--nbest', type=int, default=5, help='nbest')
-    parser.add_argument('--decode-max-len', type=int, default=500, help='decode max len')
+
     args = parser.parse_args()
     return args
 

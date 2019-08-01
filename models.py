@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torchsummary import summary
-from config import PAD_token, SOS_token, EOS_token
+from config import PAD_token, sos_id, eos_id
 from utils import pad_list
 
 
@@ -99,13 +99,13 @@ class Decoder(nn.Module):
         # from espnet/Decoder.forward()
         ys = [y[y != PAD_token] for y in padded_input]  # parse padded ys
         # prepare input and output word sequences with sos/eos IDs
-        eos = ys[0].new([EOS_token])
-        sos = ys[0].new([SOS_token])
+        eos = ys[0].new([eos_id])
+        sos = ys[0].new([sos_id])
         ys_in = [torch.cat([sos, y], dim=0) for y in ys]
         ys_out = [torch.cat([y, eos], dim=0) for y in ys]
         # padding for ys with -1
         # pys: utt x olen
-        ys_in_pad = pad_list(ys_in, EOS_token)
+        ys_in_pad = pad_list(ys_in, eos_id)
         ys_out_pad = pad_list(ys_out, PAD_token)
         assert ys_in_pad.size() == ys_out_pad.size()
         batch_size = ys_in_pad.size(0)
@@ -178,7 +178,7 @@ class Decoder(nn.Module):
         att_c = self.zero_state(encoder_outputs.unsqueeze(0),
                                 H=encoder_outputs.unsqueeze(0).size(2))
         # prepare sos
-        y = SOS_token
+        y = sos_id
         vy = encoder_outputs.new_zeros(1).long()
 
         hyp = {'score': 0.0, 'yseq': [y], 'c_prev': c_list, 'h_prev': h_list,
@@ -239,13 +239,13 @@ class Decoder(nn.Module):
             # add eos in the final loop to avoid that there are no ended hyps
             if i == maxlen - 1:
                 for hyp in hyps:
-                    hyp['yseq'].append(EOS_token)
+                    hyp['yseq'].append(eos_id)
 
             # add ended hypothes to a final list, and removed them from current hypothes
             # (this will be a probmlem, number of hyps < beam)
             remained_hyps = []
             for hyp in hyps:
-                if hyp['yseq'][-1] == EOS_token:
+                if hyp['yseq'][-1] == eos_id:
                     # hyp['score'] += (i + 1) * penalty
                     ended_hyps.append(hyp)
                 else:
