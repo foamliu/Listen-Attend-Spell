@@ -1,8 +1,10 @@
 import numpy as np
+import torch
 from tensorboardX import SummaryWriter
+from torch import nn
 
-from config import *
-from data_gen import LoadDataset
+from config import device, grad_clip, print_freq, vocab_size, num_workers, sos_id, eos_id
+from data_gen import AiShellDataset, pad_collate
 from models.decoder import Decoder
 from models.encoder import Encoder
 from models.seq2seq import Seq2Seq
@@ -21,29 +23,25 @@ def train_net(args):
     # Initialize / load checkpoint
     if checkpoint is None:
         # model
-        encoder = Encoder(args.einput, args.ehidden, args.elayer,
-                          dropout=args.edropout, bidirectional=args.ebidirectional,
-                          rnn_type=args.etype)
-        decoder = Decoder(vocab_size, args.dembed, sos_id,
-                          eos_id, args.dhidden, args.dlayer,
-                          bidirectional_encoder=args.ebidirectional)
+        encoder = Encoder(args.d_input * args.LFR_m, args.n_layers_enc, args.n_head,
+                          args.d_k, args.d_v, args.d_model, args.d_inner,
+                          dropout=args.dropout, pe_maxlen=args.pe_maxlen)
+        decoder = Decoder(sos_id, eos_id, vocab_size,
+                          args.d_word_vec, args.n_layers_dec, args.n_head,
+                          args.d_k, args.d_v, args.d_model, args.d_inner,
+                          dropout=args.dropout,
+                          tgt_emb_prj_weight_sharing=args.tgt_emb_prj_weight_sharing,
+                          pe_maxlen=args.pe_maxlen)
         model = Seq2Seq(encoder, decoder)
+        model = nn.DataParallel(model)
 
-        # encoder = nn.DataParallel(encoder)
-        # decoder = nn.DataParallel(decoder)
-
-        if args.optimizer == 'sgd':
-            optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.mom,
-                                        weight_decay=args.weight_decay)
-        else:
-            optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        optimizer = torch.optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-09)
 
     else:
         checkpoint = torch.load(checkpoint)
         start_epoch = checkpoint['epoch'] + 1
         epochs_since_improvement = checkpoint['epochs_since_improvement']
-        encoder = checkpoint['encoder']
-        decoder = checkpoint['decoder']
+        model = checkpoint['model']
         optimizer = checkpoint['optimizer']
 
     logger = get_logger()
@@ -52,19 +50,15 @@ def train_net(args):
     model = model.to(device)
 
     # Custom dataloaders
-    train_loader = LoadDataset('train', text_only=False, data_path=data_path, batch_size=args.batch_size,
-                               max_timestep=max_timestep, max_label_len=max_label_len, use_gpu=use_gpu, n_jobs=n_jobs,
-                               train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
-                               decode_beam_size=decode_beam_size)
-
-    val_loader = LoadDataset('dev', text_only=False, data_path=data_path, batch_size=args.batch_size,
-                             max_timestep=max_timestep, max_label_len=max_label_len, use_gpu=use_gpu, n_jobs=n_jobs,
-                             train_set=train_set, dev_set=dev_set, test_set=test_set, dev_batch_size=dev_batch_size,
-                             decode_beam_size=decode_beam_size)
+    train_dataset = AiShellDataset('train')
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=pad_collate,
+                                               shuffle=True, num_workers=num_workers)
+    valid_dataset = AiShellDataset('dev')
+    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=args.batch_size, collate_fn=pad_collate,
+                                               shuffle=False, num_workers=num_workers)
 
     # Epochs
-    for epoch in range(start_epoch, args.end_epoch):
-
+    for epoch in range(start_epoch, args.epochs):
         # One epoch's training
         train_loss = train(train_loader=train_loader,
                            model=model,
@@ -72,14 +66,12 @@ def train_net(args):
                            epoch=epoch,
                            logger=logger)
         writer.add_scalar('Train_Loss', train_loss, epoch)
-        logger.info('[Training] Loss : {:.4f}'.format(train_loss))
 
         # One epoch's validation
-        valid_loss = valid(valid_loader=val_loader,
-                           encoder=encoder,
-                           decoder=decoder)
+        valid_loss = valid(valid_loader=valid_loader,
+                           model=model,
+                           logger=logger)
         writer.add_scalar('Valid_Loss', valid_loss, epoch)
-        logger.info('[Validate] Loss : {:.4f}'.format(valid_loss))
 
         # Check if there was an improvement
         is_best = valid_loss < best_loss
@@ -91,7 +83,7 @@ def train_net(args):
             epochs_since_improvement = 0
 
         # Save checkpoint
-        save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, optimizer, best_loss, is_best)
+        save_checkpoint(epoch, epochs_since_improvement, model, optimizer, best_loss, is_best)
 
 
 def train(train_loader, model, optimizer, epoch, logger):
@@ -100,24 +92,19 @@ def train(train_loader, model, optimizer, epoch, logger):
     losses = AverageMeter()
 
     # Batches
-    for i, (x, y) in enumerate(train_loader):
-        # Hack bucket, record state length for each uttr, get longest label seq for decode step
-        assert len(x.shape) == 4, 'Bucketing should cause acoustic feature to have shape 1xBxTxD'
-        # print('x.shape: ' + str(x.shape))
-        assert len(y.shape) == 3, 'Bucketing should cause label have to shape 1xBxT'
-        # print('y.shape: ' + str(y.shape))
-        x = x.squeeze(0).to(device=device, dtype=torch.float32)
-        y = y.squeeze(0).to(device=device, dtype=torch.long)
-        state_len = np.sum(np.sum(x.cpu().data.numpy(), axis=-1) != 0, axis=-1)
-        state_len = [int(sl) for sl in state_len]
+    for i, (data) in enumerate(train_loader):
+        # Move to GPU, if available
+        padded_input, padded_target, input_lengths = data
+        padded_input = padded_input.to(device)
+        padded_target = padded_target.to(device)
+        input_lengths = input_lengths.to(device)
 
-        # ASR forwarding
-        optimizer.zero_grad()
-        loss = model(x, state_len, y)
+        # Forward prop.
+        pred, gold = model(padded_input, input_lengths, padded_target)
+        loss, n_correct = cal_performance(pred, gold, smoothing=args.label_smoothing)
 
         # Back prop.
         optimizer.zero_grad()
-
         loss.backward()
 
         # Clip gradients
@@ -137,26 +124,28 @@ def train(train_loader, model, optimizer, epoch, logger):
     return losses.avg
 
 
-def valid(valid_loader, model):
+def valid(valid_loader, model, logger):
     model.eval()
+
     losses = AverageMeter()
 
-    with torch.no_grad():
-        # Batches
-        for i, (x, y) in enumerate(valid_loader):
-            # Prepare data
-            if len(x.shape) == 4: x = x.squeeze(0)
-            if len(y.shape) == 3: y = y.squeeze(0)
-            x = x.to(device=device, dtype=torch.float32)
-            y = y.to(device=device, dtype=torch.long)
-            state_len = torch.sum(torch.sum(x.cpu(), dim=-1) != 0, dim=-1)
-            state_len = [int(sl) for sl in state_len]
+    # Batches
+    for i, (data) in enumerate(valid_loader):
+        # Move to GPU, if available
+        padded_input, padded_target, input_lengths = data
+        padded_input = padded_input.to(device)
+        padded_target = padded_target.to(device)
+        input_lengths = input_lengths.to(device)
 
-            # Forward
-            loss = model(x, state_len, y)
+        # Forward prop.
+        pred, gold = model(padded_input, input_lengths, padded_target)
+        loss, n_correct = cal_performance(pred, gold, smoothing=args.label_smoothing)
 
-            # Keep track of metrics
-            losses.update(loss.item())
+        # Keep track of metrics
+        losses.update(loss.item())
+
+    # Print status
+    logger.info('\nValidation Loss {loss.val:.4f} ({loss.avg:.4f})\n'.format(loss=losses))
 
     return losses.avg
 

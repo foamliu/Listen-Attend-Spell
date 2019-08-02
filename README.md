@@ -15,18 +15,24 @@ year={2015}
 ## DataSet
 
 ### Introduction
-The dataset I used is the LibriSpeech dataset. It contains about 1000 hours of 16kHz read English speech. It is available here: http://www.openslr.org/12/
+Aishell is an open-source Chinese Mandarin speech corpus published by Beijing Shell Shell Technology Co.,Ltd.
+
+400 people from different accent areas in China are invited to participate in the recording, which is conducted in a quiet indoor environment using high fidelity microphone and downsampled to 16kHz. The manual transcription accuracy is above 95%, through professional speech annotation and strict quality inspection. The data is free for academic use. We hope to provide moderate amount of data for new researchers in the field of speech recognition.
+
+```
+@inproceedings{aishell_2017,
+  title={AIShell-1: An Open-Source Mandarin Speech Corpus and A Speech Recognition Baseline},
+  author={Hui Bu, Jiayu Du, Xingyu Na, Bengu Wu, Hao Zheng},
+  booktitle={Oriental COCOSDA 2017},
+  pages={Submitted},
+  year={2017}
+}
+```
 
 ### Obtain
-Create a folder "data" then run:
+Create a data folder then run:
 ```bash
-$ wget http://www.openslr.org/resources/12/train-clean-100.tar.gz
-$ wget http://www.openslr.org/resources/12/train-clean-360.tar.gz
-$ wget http://www.openslr.org/resources/12/train-other-500.tar.gz
-$ wget http://www.openslr.org/resources/12/dev-clean.tar.gz
-$ wget http://www.openslr.org/resources/12/dev-other.tar.gz
-$ wget http://www.openslr.org/resources/12/test-clean.tar.gz
-$ wget http://www.openslr.org/resources/12/test-other.tar.gz
+$ wget http://www.openslr.org/resources/33/data_aishell.tgz
 ```
 
 ## Dependencies
@@ -36,11 +42,36 @@ $ wget http://www.openslr.org/resources/12/test-other.tar.gz
 ## Usage
 
 ### Data wrangling
-Extract audio and transcript data, scan them, to get features:
+Extract data_aishell.tgz:
 ```bash
-$ python3 extract.py
-$ python3 pre_process.py --data_path data/LibriSpeech/ --feature_type fbank --feature_dim 40 --output_path data/output --target char
+$ python extract.py
 ```
+
+Extract wav files into train/dev/test folders:
+```bash
+$ cd data/data_aishell/wav
+$ find . -name '*.tar.gz' -execdir tar -xzvf '{}' \;
+```
+
+Scan transcript data, generate features:
+```bash
+$ python pre_process.py
+```
+
+Now the folder structure under data folder is sth. like:
+
+<pre>
+data/
+    data_aishell.tgz
+    data_aishell/
+        transcript/
+            aishell_transcript_v0.8.txt
+        wav/
+            train/
+            dev/
+            test/
+    aishell.pickle
+</pre>
 
 ### Train
 ```bash
@@ -61,3 +92,4 @@ $ python demo.py
 
 ## Reference
 [1] W. Chan, N. Jaitly, Q. Le, and O. Vinyals, “Listen, attend and spell: A neural network for large vocabulary conversational speech recognition,” in ICASSP 2016. (https://arxiv.org/abs/1508.01211v2)
+
