@@ -23,15 +23,12 @@ def train_net(args):
     # Initialize / load checkpoint
     if checkpoint is None:
         # model
-        encoder = Encoder(args.d_input * args.LFR_m, args.n_layers_enc, args.n_head,
-                          args.d_k, args.d_v, args.d_model, args.d_inner,
-                          dropout=args.dropout, pe_maxlen=args.pe_maxlen)
-        decoder = Decoder(sos_id, eos_id, vocab_size,
-                          args.d_word_vec, args.n_layers_dec, args.n_head,
-                          args.d_k, args.d_v, args.d_model, args.d_inner,
-                          dropout=args.dropout,
-                          tgt_emb_prj_weight_sharing=args.tgt_emb_prj_weight_sharing,
-                          pe_maxlen=args.pe_maxlen)
+        encoder = Encoder(args.einput, args.ehidden, args.elayer,
+                          dropout=args.edropout, bidirectional=args.ebidirectional,
+                          rnn_type=args.etype)
+        decoder = Decoder(vocab_size, args.dembed, sos_id,
+                          eos_id, args.dhidden, args.dlayer,
+                          bidirectional_encoder=args.ebidirectional)
         model = Seq2Seq(encoder, decoder)
         model = nn.DataParallel(model)
 
@@ -100,8 +97,7 @@ def train(train_loader, model, optimizer, epoch, logger):
         input_lengths = input_lengths.to(device)
 
         # Forward prop.
-        pred, gold = model(padded_input, input_lengths, padded_target)
-        loss, n_correct = cal_performance(pred, gold, smoothing=args.label_smoothing)
+        loss = model(padded_input, input_lengths, padded_target)
 
         # Back prop.
         optimizer.zero_grad()
@@ -138,8 +134,7 @@ def valid(valid_loader, model, logger):
         input_lengths = input_lengths.to(device)
 
         # Forward prop.
-        pred, gold = model(padded_input, input_lengths, padded_target)
-        loss, n_correct = cal_performance(pred, gold, smoothing=args.label_smoothing)
+        loss = model(padded_input, input_lengths, padded_target)
 
         # Keep track of metrics
         losses.update(loss.item())
