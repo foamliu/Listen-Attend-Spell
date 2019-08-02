@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from tensorboardX import SummaryWriter
-from torch import nn
 
 from config import device, grad_clip, print_freq, vocab_size, num_workers, sos_id, eos_id
 from data_gen import AiShellDataset, pad_collate
@@ -45,10 +44,10 @@ def train_net(args):
     logger = get_logger()
 
     # Custom dataloaders
-    train_dataset = AiShellDataset('train')
+    train_dataset = AiShellDataset(args, 'train')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=pad_collate,
                                                shuffle=True, num_workers=num_workers)
-    valid_dataset = AiShellDataset('dev')
+    valid_dataset = AiShellDataset(args, 'dev')
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=args.batch_size, collate_fn=pad_collate,
                                                shuffle=False, num_workers=num_workers)
 
