@@ -80,7 +80,7 @@ def parse_args():
     # Network architecture
     # encoder
     # TODO: automatically infer input dim
-    parser.add_argument('--einput', default=40, type=int,
+    parser.add_argument('--einput', default=80, type=int,
                         help='Dim of encoder input')
     parser.add_argument('--ehidden', default=512, type=int,
                         help='Size of encoder hidden units')
