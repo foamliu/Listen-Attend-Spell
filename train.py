@@ -30,7 +30,8 @@ def train_net(args):
                           eos_id, args.dhidden, args.dlayer,
                           bidirectional_encoder=args.ebidirectional)
         model = Seq2Seq(encoder, decoder)
-        # model = nn.DataParallel(model)
+        print(model)
+        model.cuda()
 
         optimizer = torch.optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-09)
 
@@ -42,9 +43,6 @@ def train_net(args):
         optimizer = checkpoint['optimizer']
 
     logger = get_logger()
-
-    # Move to GPU, if available
-    model = model.to(device)
 
     # Custom dataloaders
     train_dataset = AiShellDataset('train')
