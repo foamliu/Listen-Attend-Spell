@@ -33,11 +33,10 @@ def train_net(args):
         # decoder = nn.DataParallel(decoder)
 
         if args.optimizer == 'sgd':
-            optimizer = torch.optim.SGD([{'params': encoder.parameters()}, {'params': decoder.parameters()}],
-                                        lr=args.lr, momentum=args.mom, weight_decay=args.weight_decay)
+            optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.mom,
+                                        weight_decay=args.weight_decay)
         else:
-            optimizer = torch.optim.Adam([{'params': encoder.parameters()}, {'params': decoder.parameters()}],
-                                         lr=args.lr)
+            optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     else:
         checkpoint = torch.load(checkpoint)
@@ -50,8 +49,7 @@ def train_net(args):
     logger = get_logger()
 
     # Move to GPU, if available
-    encoder = encoder.to(device)
-    decoder = decoder.to(device)
+    model = model.to(device)
 
     # Custom dataloaders
     train_loader = LoadDataset('train', text_only=False, data_path=data_path, batch_size=args.batch_size,
@@ -69,8 +67,7 @@ def train_net(args):
 
         # One epoch's training
         train_loss = train(train_loader=train_loader,
-                           encoder=encoder,
-                           decoder=decoder,
+                           model=model,
                            optimizer=optimizer,
                            epoch=epoch,
                            logger=logger)
@@ -97,11 +94,8 @@ def train_net(args):
         save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, optimizer, best_loss, is_best)
 
 
-def train(train_loader, encoder, decoder, optimizer, epoch, logger):
-    encoder.train()  # train mode (dropout and batchnorm is used)
-    decoder.train()
-
-    model = Seq2Seq(encoder, decoder)
+def train(train_loader, model, optimizer, epoch, logger):
+    model.train()  # train mode (dropout and batchnorm is used)
 
     losses = AverageMeter()
 
@@ -143,12 +137,8 @@ def train(train_loader, encoder, decoder, optimizer, epoch, logger):
     return losses.avg
 
 
-def valid(valid_loader, encoder, decoder):
-    encoder.eval()
-    decoder.eval()
-
-    model = Seq2Seq(encoder, decoder)
-
+def valid(valid_loader, model):
+    model.eval()
     losses = AverageMeter()
 
     with torch.no_grad():
