@@ -139,7 +139,7 @@ def parse_args():
     parser.add_argument('--l2', default=0.0, type=float,
                         help='weight decay (L2 penalty)')
     parser.add_argument('--checkpoint', type=str, default=None, help='checkpoint')
-
+    parser.add_argument('--end-epoch', type=int, default=10000, help='training epoch size.')
     args = parser.parse_args()
     return args
 
