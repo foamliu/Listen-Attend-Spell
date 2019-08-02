@@ -16,7 +16,7 @@ class Encoder(nn.Module):
         self.rnn_type = rnn_type
         self.dropout = dropout
         if self.rnn_type == 'lstm':
-            self.rnn = nn.LSTM(input_size, hidden_size, num_layers,
+            self.rnn = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers,
                                batch_first=True,
                                dropout=dropout,
                                bidirectional=bidirectional)
