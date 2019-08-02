@@ -38,6 +38,7 @@ checkpoint = None  # path to checkpoint, None if none
 PAD_token = 0
 sos_id = 1
 eos_id = 2
+IGNORE_ID = -1
 num_train = 120418
 num_dev = 14326
 num_test = 7176

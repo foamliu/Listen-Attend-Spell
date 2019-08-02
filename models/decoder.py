@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from attention import DotProductAttention
 
-from utils import IGNORE_ID, pad_list
+from config import IGNORE_ID
+from utils import pad_list
+from .attention import DotProductAttention
 
 
 class Decoder(nn.Module):
