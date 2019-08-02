@@ -120,7 +120,7 @@ def parse_args():
     parser.add_argument('--max_norm', default=5, type=float,
                         help='Gradient norm threshold to clip')
     # minibatch
-    parser.add_argument('--batch_size', '-b', default=32, type=int,
+    parser.add_argument('--batch-size', '-b', default=32, type=int,
                         help='Batch size')
     parser.add_argument('--maxlen_in', default=800, type=int, metavar='ML',
                         help='Batch size is reduced if the input sequence length > ML')
