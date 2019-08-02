@@ -80,7 +80,7 @@ def parse_args():
     # Network architecture
     # encoder
     # TODO: automatically infer input dim
-    parser.add_argument('--einput', default=80, type=int,
+    parser.add_argument('--einput', default=40, type=int,
                         help='Dim of encoder input')
     parser.add_argument('--ehidden', default=512, type=int,
                         help='Size of encoder hidden units')
@@ -88,7 +88,7 @@ def parse_args():
                         help='Number of encoder layers.')
     parser.add_argument('--edropout', default=0.0, type=float,
                         help='Encoder dropout rate')
-    parser.add_argument('--ebidirectional', default=1, type=int,
+    parser.add_argument('--ebidirectional', default=True, type=bool,
                         help='Whether use bidirectional encoder')
     parser.add_argument('--etype', default='lstm', type=str,
                         help='Type of encoder RNN')
