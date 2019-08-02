@@ -29,18 +29,12 @@ class Encoder(nn.Module):
             - **output**: N x T x H
             - **hidden**: (num_layers * num_directions) x N x H
         """
-        print('padded_input.size(): ' + str(padded_input.size()))
-        print('input_lengths.size(): ' + str(input_lengths.size()))
         # Add total_length for supportting nn.DataParallel() later
         # see https://pytorch.org/docs/stable/notes/faq.html#pack-rnn-unpack-with-data-parallelism
         total_length = padded_input.size(1)  # get the max sequence length
-        packed_input = pack_padded_sequence(padded_input, input_lengths,
-                                            batch_first=True)
-        print('padded_input.size(): ' + str(padded_input.size()))
+        packed_input = pack_padded_sequence(padded_input, input_lengths, batch_first=True)
         packed_output, hidden = self.lstm(packed_input)
-        output, _ = pad_packed_sequence(packed_output,
-                                        batch_first=True,
-                                        total_length=total_length)
+        output, _ = pad_packed_sequence(packed_output, batch_first=True, total_length=total_length)
         return output, hidden
 
     def flatten_parameters(self):
