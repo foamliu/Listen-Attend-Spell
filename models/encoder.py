@@ -15,11 +15,10 @@ class Encoder(nn.Module):
         self.bidirectional = bidirectional
         self.rnn_type = rnn_type
         self.dropout = dropout
-        if self.rnn_type == 'lstm':
-            self.rnn = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers,
-                               batch_first=True,
-                               dropout=dropout,
-                               bidirectional=bidirectional)
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers,
+                            batch_first=True,
+                            dropout=dropout,
+                            bidirectional=bidirectional)
 
     def forward(self, padded_input, input_lengths):
         """
@@ -38,7 +37,7 @@ class Encoder(nn.Module):
         packed_input = pack_padded_sequence(padded_input, input_lengths,
                                             batch_first=True)
         print('padded_input.size(): ' + str(padded_input.size()))
-        packed_output, hidden = self.rnn(packed_input)
+        packed_output, hidden = self.lstm(packed_input)
         output, _ = pad_packed_sequence(packed_output,
                                         batch_first=True,
                                         total_length=total_length)
