@@ -85,6 +85,8 @@ class Decoder(nn.Module):
         embedded = self.embedding(ys_in_pad)
         for t in range(output_length):
             # step 1. decoder RNN: s_i = RNN(s_i−1,y_i−1,c_i−1)
+            print(embedded[:, t, :].size())
+            print(att_c.size())
             rnn_input = torch.cat((embedded[:, t, :], att_c), dim=1)
             h_list[0], c_list[0] = self.rnn[0](
                 rnn_input, (h_list[0], c_list[0]))
