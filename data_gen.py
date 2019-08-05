@@ -47,7 +47,7 @@ class AiShellDataset(Dataset):
         wave = sample['wave']
         trn = sample['trn']
 
-        feature = extract_feature(wave, dim=self.args.einput)
+        feature = extract_feature(input_file=wave, feature='fbank', dim=self.args.einput)
         # if feature.shape[0] > self.args.maxlen_in:
         #     feature = feature[:self.args.maxlen_in, ...]
 
