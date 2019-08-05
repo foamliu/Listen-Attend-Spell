@@ -5,11 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate
 
-<<<<<<< HEAD
-from config import num_workers, pickle_file, input_dim, IGNORE_ID
-=======
-from config import num_workers, pickle_file
->>>>>>> 97075da4bc9e047b81b5af4ad37fbd83e0fe8367
+from config import num_workers, pickle_file, IGNORE_ID
 from utils import extract_feature
 
 
