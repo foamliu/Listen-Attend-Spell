@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from tensorboardX import SummaryWriter
+from tqdm import tqdm
 
 from config import device, grad_clip, print_freq, vocab_size, num_workers, sos_id, eos_id
 from data_gen import AiShellDataset, pad_collate
@@ -123,7 +124,7 @@ def valid(valid_loader, model, logger):
     losses = AverageMeter()
 
     # Batches
-    for i, (data) in enumerate(valid_loader):
+    for data in tqdm(valid_loader):
         # Move to GPU, if available
         padded_input, padded_target, input_lengths = data
         padded_input = padded_input.to(device)
