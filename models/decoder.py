@@ -107,7 +107,7 @@ class Decoder(nn.Module):
         y_all = y_all.view(batch_size * output_length, self.vocab_size)
         ce_loss = F.cross_entropy(y_all, ys_out_pad.view(-1),
                                   ignore_index=IGNORE_ID,
-                                  reduction='elementwise_mean')
+                                  reduction='mean')
         # TODO: should minus 1 here ?
         # ce_loss *= (np.mean([len(y) for y in ys_in]) - 1)
         # print("ys_in\n", ys_in)
