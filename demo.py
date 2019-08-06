@@ -1,11 +1,12 @@
 import argparse
 import pickle
 import random
+from shutil import copyfile
 
 import torch
 
 from config import pickle_file, device
-from utils import extract_feature
+from utils import extract_feature, ensure_folder
 
 
 def parse_args():
@@ -37,10 +38,13 @@ if __name__ == '__main__':
     model.eval()
 
     samples = random.sample(samples, 10)
+    ensure_folder('audios')
 
-    for sample in samples:
+    for i, sample in enumerate(samples):
         wave = sample['wave']
         trn = sample['trn']
+
+        copyfile(wave, 'audios/audio_{}.wav'.format(i))
 
         input = extract_feature(input_file=wave, feature='fbank', dim=80)
         # input = np.expand_dims(input, axis=0)
