@@ -55,4 +55,6 @@ if __name__ == '__main__':
 
         print(nbest_hyps)
 
+        trn = [char_list[idx] for idx in trn]
+        trn = ''.join(trn)
         print('GT: {}\n'.format(trn))
