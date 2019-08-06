@@ -31,7 +31,7 @@ if __name__ == '__main__':
         wave = sample['wave']
         trn = sample['trn']
 
-        input = extract_feature(input_file=wave, feature='fbank', dim=512)
+        input = extract_feature(input_file=wave, feature='fbank', dim=80)
         # input = np.expand_dims(input, axis=0)
         input = torch.from_numpy(input)
         input_length = [input[0].shape[0]]
