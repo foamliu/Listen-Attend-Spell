@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate
 
 from config import num_workers, pickle_file, IGNORE_ID
-from utils import extract_feature
+from utils import extract_feature, parse_args
 
 
 def pad_collate(batch):
@@ -23,7 +23,7 @@ def pad_collate(batch):
         input_length = feature.shape[0]
         input_dim = feature.shape[1]
         padded_input = np.zeros((max_input_len, input_dim), dtype=np.float32)
-        padded_input[:input_length, :input_dim] = feature
+        padded_input[:input_length, :] = feature
         padded_target = np.pad(trn, (0, max_target_len - len(trn)), 'constant', constant_values=IGNORE_ID)
         batch[i] = (padded_input, padded_target, input_length)
 
@@ -48,8 +48,6 @@ class AiShellDataset(Dataset):
         trn = sample['trn']
 
         feature = extract_feature(input_file=wave, feature='fbank', dim=self.args.einput)
-        # if feature.shape[0] > self.args.maxlen_in:
-        #     feature = feature[:self.args.maxlen_in, ...]
 
         return feature, trn
 
@@ -58,7 +56,8 @@ class AiShellDataset(Dataset):
 
 
 if __name__ == "__main__":
-    train_dataset = AiShellDataset('train')
+    args = parse_args()
+    train_dataset = AiShellDataset(args, 'train')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=num_workers,
                                                pin_memory=True, collate_fn=pad_collate)
 
