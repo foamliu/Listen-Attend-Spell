@@ -50,3 +50,5 @@ if __name__ == '__main__':
         nbest_hyps = model.recognize(input, input_length, char_list, args)
 
         print(nbest_hyps)
+
+        print('GT: {}\n'.format(trn))
