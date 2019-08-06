@@ -1,9 +1,9 @@
 import pickle
-import torch
 import random
-import numpy as np
+
 import torch
-from config import pickle_file
+
+from config import pickle_file, device
 from utils import extract_feature, parse_args
 
 
@@ -33,9 +33,9 @@ if __name__ == '__main__':
 
         input = extract_feature(input_file=wave, feature='fbank', dim=80)
         # input = np.expand_dims(input, axis=0)
-        input = torch.from_numpy(input)
+        input = torch.from_numpy(input).to(device)
         input_length = [input[0].shape[0]]
-        input_length = torch.LongTensor(input_length)
+        input_length = torch.LongTensor(input_length).to(device)
         nbest_hyps = model.recognize(input, input_length, char_list, args)
 
         print(nbest_hyps)
