@@ -61,21 +61,26 @@ if __name__ == "__main__":
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=num_workers,
                                                pin_memory=True, collate_fn=pad_collate)
 
-    print(len(train_dataset))
-    print(len(train_loader))
+    print('len(train_dataset): ' + str(len(train_dataset)))
+    print('len(train_loader):' + str(len(train_loader)))
 
     feature = train_dataset[10][0]
-    print(feature.shape)
+    print('feature.shape: ' + str(feature.shape))
 
     trn = train_dataset[10][1]
-    print(trn)
+    print('trn: ' + str(trn))
 
     with open(pickle_file, 'rb') as file:
         data = pickle.load(file)
-    IVOCAB = data['IVOCAB']
+    char_list = data['IVOCAB']
 
-    print([IVOCAB[idx] for idx in trn])
+    trn = [char_list[idx] for idx in trn]
+    trn = ''.join(trn)
+    print(trn)
 
     for data in train_loader:
-        print(data)
+        padded_input, padded_target, input_lengths = data
+        print('padded_input: ' + str(padded_input))
+        print('padded_target: ' + str(padded_target))
+        print('input_lengths: ' + str(input_lengths))
         break
