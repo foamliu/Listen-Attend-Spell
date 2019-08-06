@@ -8,7 +8,7 @@ from data_gen import AiShellDataset, pad_collate
 from models.decoder import Decoder
 from models.encoder import Encoder
 from models.seq2seq import Seq2Seq
-from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger
+from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, adjust_learning_rate, get_learning_rate
 
 
 def train_net(args):
@@ -54,6 +54,10 @@ def train_net(args):
 
     # Epochs
     for epoch in range(start_epoch, args.epochs):
+        # Halving learning rate when get small improvement
+        if args.half_lr and epochs_since_improvement > 0:
+            adjust_learning_rate(optimizer, 0.5)
+
         # One epoch's training
         train_loss = train(train_loader=train_loader,
                            model=model,
@@ -61,6 +65,10 @@ def train_net(args):
                            epoch=epoch,
                            logger=logger)
         writer.add_scalar('Train_Loss', train_loss, epoch)
+
+        lr = get_learning_rate(optimizer)
+        print('Learning rate: {}\n'.format(lr))
+        writer.add_scalar('Learning_Rate', lr, epoch)
 
         # One epoch's validation
         valid_loss = valid(valid_loader=valid_loader,
