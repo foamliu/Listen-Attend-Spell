@@ -47,7 +47,7 @@ class AiShellDataset(Dataset):
         wave = sample['wave']
         trn = sample['trn']
 
-        feature = extract_feature(input_file=wave, feature='fbank', dim=80, cmvn=True, delta=False, delta_delta=False)
+        feature = extract_feature(input_file=wave, feature='fbank', dim=80, cmvn=True, delta=True, delta_delta=True)
 
         return feature, trn
 
