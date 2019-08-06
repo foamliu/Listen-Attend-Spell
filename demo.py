@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
         copyfile(wave, 'audios/audio_{}.wav'.format(i))
 
-        input = extract_feature(input_file=wave, feature='fbank', dim=80)
+        input = extract_feature(input_file=wave, feature='fbank', dim=80, cmvn=True, delta=True, delta_delta=True)
         # input = np.expand_dims(input, axis=0)
         input = torch.from_numpy(input).to(device)
         input_length = [input[0].shape[0]]
