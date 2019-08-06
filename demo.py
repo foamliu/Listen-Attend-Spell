@@ -32,7 +32,7 @@ if __name__ == '__main__':
         trn = sample['trn']
 
         input = extract_feature(input_file=wave, feature='fbank', dim=512)
-        input = np.expand_dims(input, axis=0)
+        # input = np.expand_dims(input, axis=0)
         input = torch.from_numpy(input)
         input_length = [input[0].shape[0]]
         input_length = torch.LongTensor(input_length)
