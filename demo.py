@@ -40,6 +40,8 @@ if __name__ == '__main__':
     samples = random.sample(samples, 10)
     ensure_folder('audios')
 
+    results = []
+
     for i, sample in enumerate(samples):
         wave = sample['wave']
         trn = sample['trn']
@@ -53,8 +55,21 @@ if __name__ == '__main__':
         input_length = torch.LongTensor(input_length).to(device)
         nbest_hyps = model.recognize(input, input_length, char_list, args)
 
-        print(nbest_hyps)
+        out_list = []
+        for hyp in nbest_hyps:
+            out = hyp['yseq']
+            out = [char_list[idx] for idx in out]
+            out = ''.join(out)
+            out_list.append(out)
+        print('OUT_LIST: {}'.format(out_list))
 
-        trn = [char_list[idx] for idx in trn]
-        trn = ''.join(trn)
-        print('GT: {}\n'.format(trn))
+        gt = [char_list[idx] for idx in trn]
+        gt = ''.join(gt)
+        print('GT: {}\n'.format(gt))
+
+        results.append({'out_list_{}'.format(i): out_list, 'gt_{}'.format(i): gt})
+
+    import json
+
+    with open('results.json', 'w') as file:
+        json.dump(results, file, indent=4, ensure_ascii=False)
