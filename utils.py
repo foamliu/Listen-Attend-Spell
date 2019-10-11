@@ -81,11 +81,19 @@ def accuracy(scores, targets, k=1):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Listen Attend and Spell')
+
+
+    # Low Frame Rate (stacking and skipping frames)
+    parser.add_argument('--LFR_m', default=4, type=int,
+                        help='Low Frame Rate: number of frames to stack')
+    parser.add_argument('--LFR_n', default=3, type=int,
+                        help='Low Frame Rate: number of frames to skip')
+
     # general
     # Network architecture
     # encoder
     # TODO: automatically infer input dim
-    parser.add_argument('--einput', default=240, type=int,
+    parser.add_argument('--einput', default=80, type=int,
                         help='Dim of encoder input')
     parser.add_argument('--ehidden', default=256, type=int,
                         help='Size of encoder hidden units')
@@ -150,7 +158,7 @@ def get_logger():
     formatter = logging.Formatter("%(asctime)s %(levelname)s \t%(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     return logger
 
 
@@ -170,6 +178,17 @@ def pad_list(xs, pad_value):
     return pad
 
 
+# [-0.5, 0.5]
+def normalize(yt):
+    yt_max = np.max(yt)
+    yt_min = np.min(yt)
+    a = 1.0 / (yt_max - yt_min)
+    b = -(yt_max + yt_min) / (2 * (yt_max - yt_min))
+
+    yt = yt * a + b
+    return yt
+
+
 # Acoustic Feature Extraction
 # Parameters
 #     - input file  : str, audio file path
@@ -181,19 +200,21 @@ def pad_list(xs, pad_value):
 #     - save_feature: str, if given, store feature to the path and return len(feature)
 # Return
 #     acoustic features with shape (time step, dim)
-def extract_feature(input_file, feature='fbank', dim=40, cmvn=True, delta=False, delta_delta=False,
+def extract_feature(input_file, feature='fbank', dim=80, cmvn=True, delta=False, delta_delta=False,
                     window_size=25, stride=10, save_feature=None):
     y, sr = librosa.load(input_file, sr=None)
+    yt, _ = librosa.effects.trim(y, top_db=20)
+    yt = normalize(yt)
     ws = int(sr * 0.001 * window_size)
     st = int(sr * 0.001 * stride)
     if feature == 'fbank':  # log-scaled
-        feat = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=dim,
+        feat = librosa.feature.melspectrogram(y=yt, sr=sr, n_mels=dim,
                                               n_fft=ws, hop_length=st)
         feat = np.log(feat + 1e-6)
     elif feature == 'mfcc':
-        feat = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=dim, n_mels=26,
+        feat = librosa.feature.mfcc(y=yt, sr=sr, n_mfcc=dim, n_mels=26,
                                     n_fft=ws, hop_length=st)
-        feat[0] = librosa.feature.rmse(y, hop_length=st, frame_length=ws)
+        feat[0] = librosa.feature.rmse(yt, hop_length=st, frame_length=ws)
 
     else:
         raise ValueError('Unsupported Acoustic Feature: ' + feature)
