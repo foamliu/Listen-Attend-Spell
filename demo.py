@@ -61,7 +61,9 @@ if __name__ == '__main__':
         input = torch.from_numpy(input).to(device)
         input_length = [input[0].shape[0]]
         input_length = torch.LongTensor(input_length).to(device)
-        nbest_hyps = model.recognize(input, input_length, char_list, args)
+
+        with torch.no_grad():
+            nbest_hyps = model.recognize(input, input_length, char_list, args)
 
         out_list = []
         for hyp in nbest_hyps:
