@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from config import device, grad_clip, print_freq, vocab_size, num_workers, sos_id, eos_id
