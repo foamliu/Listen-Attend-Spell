@@ -5,7 +5,7 @@ from shutil import copyfile
 
 import torch
 
-from config import pickle_file, device, input_dim
+from config import device, pickle_file, input_dim
 from data_gen import build_LFR_features
 from utils import extract_feature, ensure_folder
 
