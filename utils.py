@@ -82,7 +82,6 @@ def accuracy(scores, targets, k=1):
 def parse_args():
     parser = argparse.ArgumentParser(description='Listen Attend and Spell')
 
-
     # Low Frame Rate (stacking and skipping frames)
     parser.add_argument('--LFR_m', default=4, type=int,
                         help='Low Frame Rate: number of frames to stack')

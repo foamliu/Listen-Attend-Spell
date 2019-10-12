@@ -5,13 +5,19 @@ from shutil import copyfile
 
 import torch
 
-from config import pickle_file, device
+from config import pickle_file, device, input_dim
+from data_gen import build_LFR_features
 from utils import extract_feature, ensure_folder
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         "End-to-End Automatic Speech Recognition Decoding.")
+    # Low Frame Rate (stacking and skipping frames)
+    parser.add_argument('--LFR_m', default=4, type=int,
+                        help='Low Frame Rate: number of frames to stack')
+    parser.add_argument('--LFR_n', default=3, type=int,
+                        help='Low Frame Rate: number of frames to skip')
     # decode
     parser.add_argument('--beam_size', default=30, type=int,
                         help='Beam size')
@@ -48,7 +54,9 @@ if __name__ == '__main__':
 
         copyfile(wave, 'audios/audio_{}.wav'.format(i))
 
-        input = extract_feature(input_file=wave, feature='fbank', dim=80, cmvn=True, delta=True, delta_delta=True)
+        input = extract_feature(input_file=wave, feature='fbank', dim=input_dim, cmvn=True)
+        input = build_LFR_features(input, m=args.LFR_m, n=args.LFR_n)
+
         # input = np.expand_dims(input, axis=0)
         input = torch.from_numpy(input).to(device)
         input_length = [input[0].shape[0]]
