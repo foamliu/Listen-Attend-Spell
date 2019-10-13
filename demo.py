@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
         # input = np.expand_dims(input, axis=0)
         input = torch.from_numpy(input).to(device)
-        input_length = [input[0].shape[0]]
+        input_length = [input.shape[0]]
         input_length = torch.LongTensor(input_length).to(device)
 
         with torch.no_grad():
