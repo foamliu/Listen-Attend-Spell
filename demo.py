@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
         input = extract_feature(input_file=wave, feature='fbank', dim=input_dim, cmvn=True)
         input = build_LFR_features(input, m=args.LFR_m, n=args.LFR_n)
-        print(input.shape)
+        # print(input.shape)
 
         # input = np.expand_dims(input, axis=0)
         input = torch.from_numpy(input).to(device)
@@ -70,9 +70,10 @@ if __name__ == '__main__':
         for hyp in nbest_hyps:
             out = hyp['yseq']
             out = [char_list[idx] for idx in out]
-            out = ''.join(out)
+            out = ''.join(out).replace('<sos>', '').replace('<eos>', '')
             out_list.append(out)
-        print('OUT_LIST: {}'.format(out_list))
+        out = out_list[0]
+        print('OUT: {}'.format(out))
 
         gt = [char_list[idx] for idx in trn]
         gt = ''.join(gt)
