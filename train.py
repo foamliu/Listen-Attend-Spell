@@ -3,14 +3,13 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from config import device, grad_clip, print_freq, vocab_size, num_workers, sos_id, eos_id
+from config import device, print_freq, vocab_size, num_workers, sos_id, eos_id
 from data_gen import AiShellDataset, pad_collate
 from models.decoder import Decoder
 from models.encoder import Encoder
 from models.optimizer import LasOptimizer
 from models.seq2seq import Seq2Seq
-from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, adjust_learning_rate, \
-    get_learning_rate
+from utils import parse_args, save_checkpoint, AverageMeter, get_logger, adjust_learning_rate
 
 
 def train_net(args):
@@ -114,9 +113,6 @@ def train(train_loader, model, optimizer, epoch, logger):
         # Back prop.
         optimizer.zero_grad()
         loss.backward()
-
-        # Clip gradients
-        clip_gradient(optimizer, grad_clip)
 
         # Update weights
         optimizer.step()
