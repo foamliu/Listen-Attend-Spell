@@ -56,6 +56,7 @@ if __name__ == '__main__':
 
         input = extract_feature(input_file=wave, feature='fbank', dim=input_dim, cmvn=True)
         input = build_LFR_features(input, m=args.LFR_m, n=args.LFR_n)
+        print(input.shape)
 
         # input = np.expand_dims(input, axis=0)
         input = torch.from_numpy(input).to(device)
