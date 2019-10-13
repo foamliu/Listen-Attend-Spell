@@ -117,7 +117,7 @@ def parse_args():
                         help='Number of decoder layers.')
 
     # Training config
-    parser.add_argument('--epochs', default=20, type=int,
+    parser.add_argument('--epochs', default=150, type=int,
                         help='Number of maximum epochs')
     parser.add_argument('--half_lr', dest='half_lr', default=True, type=bool,
                         help='Halving learning rate when get small improvement')

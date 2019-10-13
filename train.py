@@ -7,8 +7,10 @@ from config import device, grad_clip, print_freq, vocab_size, num_workers, sos_i
 from data_gen import AiShellDataset, pad_collate
 from models.decoder import Decoder
 from models.encoder import Encoder
+from models.optimizer import LasOptimizer
 from models.seq2seq import Seq2Seq
-from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, adjust_learning_rate, get_learning_rate
+from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, adjust_learning_rate, \
+    get_learning_rate
 
 
 def train_net(args):
@@ -31,9 +33,10 @@ def train_net(args):
                           bidirectional_encoder=args.ebidirectional)
         model = Seq2Seq(encoder, decoder)
         print(model)
-        model.cuda()
+        model.to(device)
 
-        optimizer = torch.optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-09)
+        optimizer = LasOptimizer(
+            torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.98), eps=1e-09))
 
     else:
         checkpoint = torch.load(checkpoint)
@@ -66,8 +69,11 @@ def train_net(args):
                            logger=logger)
         writer.add_scalar('model/train_loss', train_loss, epoch)
 
-        lr = get_learning_rate(optimizer)
-        print('Learning rate: {}\n'.format(lr))
+        lr = optimizer.lr
+        print('\nLearning rate: {}'.format(lr))
+        step_num = optimizer.step_num
+        print('Step num: {}\n'.format(step_num))
+
         writer.add_scalar('model/learning_rate', lr, epoch)
 
         # One epoch's validation
