@@ -76,8 +76,8 @@ if __name__ == '__main__':
         print('OUT: {}'.format(out))
 
         gt = [char_list[idx] for idx in trn]
-        gt = ''.join(gt)
-        print('GT: {}\n'.format(gt))
+        gt = ''.join(gt).replace('<eos>', '')
+        print(' GT: {}\n'.format(gt))
 
         results.append({'out_list_{}'.format(i): out_list, 'gt_{}'.format(i): gt})
 
