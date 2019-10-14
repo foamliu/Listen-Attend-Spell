@@ -9,7 +9,7 @@ from models.decoder import Decoder
 from models.encoder import Encoder
 from models.optimizer import LasOptimizer
 from models.seq2seq import Seq2Seq
-from utils import parse_args, save_checkpoint, AverageMeter, get_logger, adjust_learning_rate
+from utils import parse_args, save_checkpoint, AverageMeter, get_logger
 
 
 def train_net(args):
@@ -56,10 +56,6 @@ def train_net(args):
 
     # Epochs
     for epoch in range(start_epoch, args.epochs):
-        # Halving learning rate when get small improvement
-        if args.half_lr and epochs_since_improvement > 0:
-            adjust_learning_rate(optimizer, 0.5)
-
         # One epoch's training
         train_loss = train(train_loader=train_loader,
                            model=model,
