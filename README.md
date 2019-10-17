@@ -87,7 +87,7 @@ $ tensorboard --logdir=runs
 
 |Model|CER|Download|
 |---|---|---|
-|Listen Attend Spell|16.2|[Link](https://github.com/foamliu/Speech-Transformer/releases/download/v1.0/BEST_checkpoint.tar)|
+|Listen Attend Spell|16.2|[Link](https://github.com/foamliu/Listen-Attend-Spell/releases/download/v1.0/listen-attend-spell.pt)|
 
 
 ### Demo
