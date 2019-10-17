@@ -6,7 +6,7 @@ class Encoder(nn.Module):
     r"""Applies a multi-layer LSTM to an variable length input sequence.
     """
 
-    def __init__(self, input_size, hidden_size, num_layers,
+    def __init__(self, input_size=320, hidden_size=256, num_layers=3,
                  dropout=0.0, bidirectional=True, rnn_type='lstm'):
         super(Encoder, self).__init__()
         self.input_size = input_size

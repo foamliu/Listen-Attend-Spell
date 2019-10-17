@@ -1,14 +1,21 @@
 import torch.nn as nn
 
+from .decoder import Decoder
+from .encoder import Encoder
+
 
 class Seq2Seq(nn.Module):
     """Sequence-to-Sequence architecture with configurable encoder and decoder.
     """
 
-    def __init__(self, encoder, decoder):
+    def __init__(self, encoder=None, decoder=None):
         super(Seq2Seq, self).__init__()
-        self.encoder = encoder
-        self.decoder = decoder
+        if encoder is not None and decoder is not None:
+            self.encoder = encoder
+            self.decoder = decoder
+        else:
+            self.encoder = Encoder()
+            self.decoder = Decoder()
 
     def forward(self, padded_input, input_lengths, padded_target):
         """
