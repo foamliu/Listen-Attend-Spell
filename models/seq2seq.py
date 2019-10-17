@@ -13,10 +13,6 @@ class Seq2Seq(nn.Module):
         if encoder is not None and decoder is not None:
             self.encoder = encoder
             self.decoder = decoder
-
-            for p in self.parameters():
-                if p.dim() > 1:
-                    nn.init.xavier_uniform_(p)
         else:
             self.encoder = Encoder()
             self.decoder = Decoder()
