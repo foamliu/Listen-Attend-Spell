@@ -1,15 +1,15 @@
 import numpy as np
 import torch
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from config import device, grad_clip, print_freq, vocab_size, num_workers, sos_id, eos_id
+from config import device, print_freq, vocab_size, num_workers, sos_id, eos_id
 from data_gen import AiShellDataset, pad_collate
 from models.decoder import Decoder
 from models.encoder import Encoder
+from models.optimizer import LasOptimizer
 from models.seq2seq import Seq2Seq
-from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, adjust_learning_rate, \
-    get_learning_rate
+from utils import parse_args, save_checkpoint, AverageMeter, get_logger
 
 
 def train_net(args):
@@ -32,9 +32,10 @@ def train_net(args):
                           bidirectional_encoder=args.ebidirectional)
         model = Seq2Seq(encoder, decoder)
         print(model)
-        model.cuda()
+        model.to(device)
 
-        optimizer = torch.optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-09)
+        optimizer = LasOptimizer(
+            torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.98), eps=1e-09))
 
     else:
         checkpoint = torch.load(checkpoint)
@@ -55,10 +56,6 @@ def train_net(args):
 
     # Epochs
     for epoch in range(start_epoch, args.epochs):
-        # Halving learning rate when get small improvement
-        if args.half_lr and epochs_since_improvement > 0:
-            adjust_learning_rate(optimizer, 0.5)
-
         # One epoch's training
         train_loss = train(train_loader=train_loader,
                            model=model,
@@ -67,8 +64,11 @@ def train_net(args):
                            logger=logger)
         writer.add_scalar('model/train_loss', train_loss, epoch)
 
-        lr = get_learning_rate(optimizer)
-        print('Learning rate: {}\n'.format(lr))
+        lr = optimizer.lr
+        print('\nLearning rate: {}'.format(lr))
+        step_num = optimizer.step_num
+        print('Step num: {}\n'.format(step_num))
+
         writer.add_scalar('model/learning_rate', lr, epoch)
 
         # One epoch's validation
@@ -109,9 +109,6 @@ def train(train_loader, model, optimizer, epoch, logger):
         # Back prop.
         optimizer.zero_grad()
         loss.backward()
-
-        # Clip gradients
-        clip_gradient(optimizer, grad_clip)
 
         # Update weights
         optimizer.step()

@@ -81,11 +81,13 @@ def accuracy(scores, targets, k=1):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Listen Attend and Spell')
+
     # Low Frame Rate (stacking and skipping frames)
     parser.add_argument('--LFR_m', default=4, type=int,
                         help='Low Frame Rate: number of frames to stack')
     parser.add_argument('--LFR_n', default=3, type=int,
                         help='Low Frame Rate: number of frames to skip')
+
     # general
     # Network architecture
     # encoder
@@ -115,7 +117,7 @@ def parse_args():
                         help='Number of decoder layers.')
 
     # Training config
-    parser.add_argument('--epochs', default=20, type=int,
+    parser.add_argument('--epochs', default=150, type=int,
                         help='Number of maximum epochs')
     parser.add_argument('--half_lr', dest='half_lr', default=True, type=bool,
                         help='Halving learning rate when get small improvement')

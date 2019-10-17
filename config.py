@@ -12,6 +12,8 @@ hidden_size = 512
 embedding_dim = 512
 cmvn = True  # apply CMVN on feature
 num_layers = 4
+LFR_m = 4
+LFR_n = 3
 
 # Training parameters
 n_jobs = 8
@@ -21,7 +23,7 @@ tf_rate = 1.0
 lr = 1e-3
 num_workers = 1  # for data-loading; right now, only 1 works with h5py
 grad_clip = 5.  # clip gradients at an absolute value of
-print_freq = 10  # print training/validation stats  every __ batches
+print_freq = 100  # print training/validation stats  every __ batches
 checkpoint = None  # path to checkpoint, None if none
 
 # Data parameters
