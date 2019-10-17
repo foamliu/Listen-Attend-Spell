@@ -1,5 +1,6 @@
 import torch
 
+from models.seq2seq import Seq2Seq
 
 if __name__ == '__main__':
     checkpoint = 'BEST_checkpoint.tar'
@@ -7,4 +8,8 @@ if __name__ == '__main__':
     model = checkpoint['model']
     # model.eval()
 
-    torch.save(model.state_dict(), 'listen-attend-spell.pt')
+    filename = 'listen-attend-spell.pt'
+    torch.save(model.state_dict(), filename)
+
+    model = Seq2Seq()
+    model.load_state_dict(torch.load(filename))

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from config import IGNORE_ID
+from config import IGNORE_ID, vocab_size, sos_id, eos_id
 from utils import pad_list
 from .attention import DotProductAttention
 
@@ -11,8 +11,8 @@ class Decoder(nn.Module):
     """
     """
 
-    def __init__(self, vocab_size, embedding_dim, sos_id, eos_id, hidden_size,
-                 num_layers, bidirectional_encoder=True):
+    def __init__(self, vocab_size=vocab_size, embedding_dim=512, sos_id=sos_id, eos_id=eos_id, hidden_size=512,
+                 num_layers=1, bidirectional_encoder=True):
         super(Decoder, self).__init__()
         # Hyper parameters
         # embedding + output
