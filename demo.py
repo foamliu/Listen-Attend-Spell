@@ -7,6 +7,7 @@ import torch
 
 from config import device, pickle_file, input_dim
 from data_gen import build_LFR_features
+from models.seq2seq import Seq2Seq
 from utils import extract_feature, ensure_folder
 
 
@@ -38,9 +39,10 @@ if __name__ == '__main__':
     char_list = data['IVOCAB']
     samples = data['test']
 
-    checkpoint = 'BEST_checkpoint.tar'
-    checkpoint = torch.load(checkpoint)
-    model = checkpoint['model']
+    filename = 'listen-attend-spell.pt'
+    model = Seq2Seq()
+    model.load_state_dict(torch.load(filename))
+    model = model.to(device)
     model.eval()
 
     samples = random.sample(samples, 10)
